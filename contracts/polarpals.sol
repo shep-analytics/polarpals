@@ -19,10 +19,10 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
     using Address for address payable;
     using SafeMath for uint256;
 
-    uint256 public constant MAX_FLUFS = 10000;
+    uint256 public constant MAX_PALS = 10000;
     uint256 public constant MAX_PURCHASE = 6;
     uint256 public constant AMOUNT_RESERVED = 120;
-    uint256 public constant FLUF_PRICE = 9E16; // 0.09ETH
+    uint256 public constant PAL_PRICE = 9E16; // 0.09ETH
     uint256 public constant RENAME_PRICE = 9E15; // 0.009ETH
     string public constant TOKEN_URI_BASE = "https://fluf-site.vercel.app/api/token/"; 
 
@@ -48,11 +48,11 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
     uint256 _startingIndex;
 
 
-      //Credit to 0xc2c747e0f7004f9e8817db2ca4997657a7746928
+      //Credit to deploying address
     function setStartingIndexAndMintReserve(address reserveAddress) public {
         require(_startingIndex == 0, "Starting index is already set.");
         
-        _startingIndex = uint256(blockhash(block.number - 1)) % MAX_FLUFS;
+        _startingIndex = uint256(blockhash(block.number - 1)) % MAX_PALS;
    
         // Prevent default sequence
         if (_startingIndex == 0) {
@@ -64,7 +64,7 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
 
         for(uint256 i = 0; i < AMOUNT_RESERVED; i++) {
             _safeMint(reserveAddress, _nextTokenId); 
-            _nextTokenId = _nextTokenId.add(1).mod(MAX_FLUFS); 
+            _nextTokenId = _nextTokenId.add(1).mod(MAX_PALS); 
         }
     }
 
@@ -76,7 +76,7 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
     }
 
     function setImmutableIPFSBucket(string memory immutableIPFSBucket_) public onlyOwner {
-        require(bytes(_immutableIPFSBucket).length == 0, "This IPFS bucket is immuable and can only be set once.");
+        require(bytes(_immutableIPFSBucket).length == 0, "This IPFS bucket is immutable and can only be set once.");
         _immutableIPFSBucket = immutableIPFSBucket_;
     }
 
@@ -90,7 +90,7 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
 
         require(
             _msgSender() == owner,
-            "This isn't your FLUF."
+            "This isn't your PolarPal."
         );
 
         uint256 amountPaid = msg.value;
@@ -98,7 +98,7 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
         if(_nameChanged[tokenId]) {
             require(amountPaid == RENAME_PRICE, "It costs to create a new identity.");
         } else {
-            require(amountPaid == 0, "First time's free my fluffy little friend.");
+            require(amountPaid == 0, "First time's free friend.");
             _nameChanged[tokenId] = true;
         }
 
@@ -166,50 +166,50 @@ contract PolarPals is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Reent
     }
 
 
-    function mintFluf(address human, uint256 amountOfFlufs) public nonReentrant payable virtual returns (uint256) {
+    function mintPAL(address human, uint256 amountOfPALs) public nonReentrant payable virtual returns (uint256) {
 
-        require(_state != State.Setup, "FLUFs aren't ready yet!");
-        require(amountOfFlufs <= MAX_PURCHASE, "Hey, that's too many FLUFs. Save some for the rest of us!");
+        require(_state != State.Setup, "PolarPals aren't ready yet!");
+        require(amountOfPALs <= MAX_PURCHASE, "Hey, that's too many PolarPals. Save some for the rest of us!");
 
-        require(totalSupply().add(amountOfFlufs) <= MAX_FLUFS, "Sorry, there's not that many FLUFs left.");
-        require(FLUF_PRICE.mul(amountOfFlufs) <= msg.value, "Hey, that's not the right price.");
+        require(totalSupply().add(amountOfPALs) <= MAX_PALS, "Sorry, there's not that many PolarPals left.");
+        require(PAL_PRICE.mul(amountOfPALs) <= msg.value, "Hey, that's not the right price.");
 
 
         if(_state == State.PreParty) {
-            require(_authorised[human] >= amountOfFlufs, "Hey, you're not allowed to buy this many FLUFs during the pre-party.");
-            _authorised[human] -= amountOfFlufs;
+            require(_authorised[human] >= amountOfPALs, "Hey, you're not allowed to buy this many PolarPals during the pre-party.");
+            _authorised[human] -= amountOfPALs;
         }
 
-        uint256 firstFlufRecieved = _nextTokenId;
+        uint256 firstPalRecieved = _nextTokenId;
 
-        for(uint i = 0; i < amountOfFlufs; i++) {
+        for(uint i = 0; i < amountOfPALs; i++) {
             _safeMint(human, _nextTokenId); 
-            _nextTokenId = _nextTokenId.add(1).mod(MAX_FLUFS); 
+            _nextTokenId = _nextTokenId.add(1).mod(MAX_PALS); 
         }
 
-        return firstFlufRecieved;
+        return firstPalRecieved;
 
     }
 
-     function withdrawAllEth(address payable payee) public virtual onlyOwner {
+    function withdrawAllEth(address payable payee) public virtual onlyOwner {
         payee.sendValue(address(this).balance);
     }
 
 
-    function authoriseFluf(address human, uint256 amountOfFlufs)
+    function authorisePal(address human, uint256 amountOfPALs)
         public
         onlyOwner
     {
-      _authorised[human] += amountOfFlufs;
+      _authorised[human] += amountOfPALs;
     }
 
 
-    function authoriseFlufBatch(address[] memory humans, uint256 amountOfFlufs)
+    function authorisePalBatch(address[] memory humans, uint256 amountOfPALs)
         public
         onlyOwner
     {
         for (uint8 i = 0; i < humans.length; i++) {
-            authoriseFluf(humans[i], amountOfFlufs);
+            authorisePal(humans[i], amountOfPALs);
         }
     }
 
